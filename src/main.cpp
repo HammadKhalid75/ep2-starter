@@ -1,37 +1,29 @@
-/*
- * Session 2 — read the MPU-6050 and print CSV over serial at ~50 Hz.
- * --------------------------------------------------------------------------
- * Copy this into src/main.cpp. Sanity-check against physics you know:
- *   flat on the table -> Z is about +9.8 (that's gravity!), X and Y near 0.
- *
- * Record a dataset (one file per gesture) from your laptop:
- *   pio device monitor --quiet > wave_01.csv
- * ...then upload the CSVs to Edge Impulse next session.
- */
+// EP2 S2: one repeated address request for an unambiguous scope capture.
+// Copy into src/main.cpp; preserve your working platformio.ini.
+// Wire: 3V3, GND, SDA GPIO8, SCL GPIO9. Keep AD0 low (default).
+// First use the full scanner to confirm only 0x68 is present.
+// Change REQUEST_ADDRESS: 0x68 -> 0x69 -> 0x68; reflash each time.
+// Expected: ACK -> address NACK -> ACK, with all wires intact.
+// Other nonzero Wire statuses are errors, not automatically an address NACK.
+// Scope: A=SDA, B=SCL, grounds=GND; I2C seven-bit address decode.
+// Restore examples/session02_mpu_read.cpp before recording motion.
 #include <Arduino.h>
-#include <Adafruit_MPU6050.h>
 #include <Wire.h>
 
-Adafruit_MPU6050 mpu;
+constexpr uint8_t REQUEST_ADDRESS = 0x68;
 
 void setup() {
   Serial.begin(115200);
   delay(300);
-  Wire.begin(8, 9);                   // SDA 8, SCL 9
-
-  if (!mpu.begin()) {
-    Serial.println("MPU-6050 not found — run the I2C scanner first.");
-    while (true) delay(1000);
-  }
-  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  Wire.begin(8, 9);
+  Wire.setClock(100000);  // 100 kHz SCL, not 100000 sensor readings/s
 }
 
 void loop() {
-  sensors_event_t a, g, t;
-  mpu.getEvent(&a, &g, &t);           // acceleration in m/s^2
-
-  Serial.printf("%.2f,%.2f,%.2f\n",
-                a.acceleration.x, a.acceleration.y, a.acceleration.z);
-
-  delay(20);                          // ~50 Hz — the rate you'll train AND deploy at
+  Wire.beginTransmission(REQUEST_ADDRESS);
+  uint8_t status = Wire.endTransmission();
+  Serial.printf("Address 0x%02X: Wire status %u\n", REQUEST_ADDRESS, status);
+  // Status 0: acknowledged; status 2: address not acknowledged.
+  // Inspect any other status instead of calling every failure a NACK.
+  delay(1000);           // One short request, then an idle gap for the scope.
 }
