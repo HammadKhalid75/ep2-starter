@@ -6,7 +6,7 @@
  * 2. The readings I observed in the three poses (held still):
  *    up ~ +9.6, sideways ~ +0.1, down ~ -9.5   <-- REPLACE with YOUR measured values
  * 3. One thing that surprised me when testing:
- *    Even held "still," the Z reading wobbled by a few tenths, so I set the
+ *    Even held "still," the Z reading wobbled by a few tenths, I set the
  *    threshold at +3.0 instead of near 0 to avoid flicker near sideways.
  *    <-- REPLACE with what actually surprised YOU
  *
